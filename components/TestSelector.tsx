@@ -35,6 +35,17 @@ export default function TestSelector({ rollNumber, onTestSelect, onBack }: TestS
         throw new Error(sheetsData.error || 'Failed to fetch tests');
       }
 
+      // Check if attendance check had an error
+      if (!attendanceResponse.ok) {
+        const errorMsg = attendanceData.error || 'Failed to check attendance';
+        console.error('Attendance check error:', errorMsg);
+        // Still show the sheets, but with no attendance data
+        setSheets(sheetsData.sheets || []);
+        setAttendance({});
+        setError(`Warning: ${errorMsg}. Please contact support if this persists.`);
+        return;
+      }
+
       setSheets(sheetsData.sheets || []);
       setAttendance(attendanceData.attendance || {});
 
