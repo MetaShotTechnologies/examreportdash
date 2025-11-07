@@ -36,7 +36,7 @@ export default function Home() {
       }
 
       const attendance = data.attendance || {};
-      const hasAnyAttendance = Object.values(attendance).some((attended: boolean) => attended);
+      const hasAnyAttendance = Object.values(attendance).some((attended) => attended === true);
 
       if (!hasAnyAttendance) {
         setValidationError('Roll number not found. Please check and try again.');

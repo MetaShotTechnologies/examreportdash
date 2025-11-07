@@ -40,7 +40,7 @@ export default function TestSelector({ rollNumber, onTestSelect, onBack }: TestS
 
       // Check if user is absent from all tests
       const allAbsent = Object.values(attendanceData.attendance || {}).every(
-        (attended: boolean) => !attended
+        (attended) => attended !== true
       );
       
       if (allAbsent && sheetsData.sheets?.length > 0) {
