@@ -14,10 +14,31 @@ export async function getSheetsClient() {
   }
 
   try {
+    // Handle private key formatting - it might come with literal \n or actual newlines
+    let formattedPrivateKey = privateKey.trim();
+    
+    // Replace literal \n strings with actual newlines (handles case where env var has literal \n)
+    formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n');
+    
+    // If still no newlines, the key might be on a single line - try to detect and format
+    // But first, ensure we have the markers
+    if (!formattedPrivateKey.includes('BEGIN PRIVATE KEY')) {
+      throw new Error('Private key is missing BEGIN PRIVATE KEY marker. Please include the full key with BEGIN and END markers.');
+    }
+    
+    if (!formattedPrivateKey.includes('END PRIVATE KEY')) {
+      throw new Error('Private key is missing END PRIVATE KEY marker. Please include the full key with BEGIN and END markers.');
+    }
+    
+    // Validate the key format - it should have newlines
+    if (!formattedPrivateKey.includes('\n')) {
+      console.warn('Private key appears to be on a single line. This may cause issues.');
+    }
+
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: clientEmail,
-        private_key: privateKey.replace(/\\n/g, '\n'),
+        private_key: formattedPrivateKey,
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
@@ -30,6 +51,17 @@ export async function getSheetsClient() {
     return sheets;
   } catch (error: any) {
     console.error('Error creating Google Auth client:', error);
+    
+    // Check for specific decoder errors which indicate private key format issues
+    if (error.message && error.message.includes('DECODER routines')) {
+      throw new Error(
+        'Private key format error. Please ensure the GOOGLE_PRIVATE_KEY in Netlify includes:\n' +
+        '1. The full key with -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY-----\n' +
+        '2. All newlines preserved (copy the entire key from your JSON file)\n' +
+        '3. No extra quotes or spaces around the key'
+      );
+    }
+    
     throw new Error(`Failed to initialize Google Sheets client: ${error.message}`);
   }
 }
