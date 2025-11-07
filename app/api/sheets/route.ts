@@ -5,10 +5,30 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const action = searchParams.get('action');
   const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY;
 
+  // Check all required environment variables
   if (!spreadsheetId) {
+    console.error('Missing GOOGLE_SPREADSHEET_ID');
     return NextResponse.json(
       { error: 'GOOGLE_SPREADSHEET_ID not configured' },
+      { status: 500 }
+    );
+  }
+
+  if (!serviceAccountEmail) {
+    console.error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL');
+    return NextResponse.json(
+      { error: 'GOOGLE_SERVICE_ACCOUNT_EMAIL not configured' },
+      { status: 500 }
+    );
+  }
+
+  if (!privateKey) {
+    console.error('Missing GOOGLE_PRIVATE_KEY');
+    return NextResponse.json(
+      { error: 'GOOGLE_PRIVATE_KEY not configured' },
       { status: 500 }
     );
   }
@@ -134,8 +154,26 @@ export async function GET(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Google Sheets API error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to fetch data from Google Sheets';
+    if (error.message) {
+      errorMessage = error.message;
+    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      errorMessage = 'Unable to connect to Google Sheets API. Please check your network connection.';
+    } else if (error.code === 403) {
+      errorMessage = 'Access denied. Please verify the service account has access to the spreadsheet.';
+    } else if (error.code === 404) {
+      errorMessage = 'Spreadsheet not found. Please verify the spreadsheet ID is correct.';
+    }
+    
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch data from Google Sheets' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
