@@ -2,41 +2,81 @@ import { google } from 'googleapis';
 
 // Initialize Google Sheets API client
 export async function getSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-  });
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY;
 
-  const sheets = google.sheets({
-    version: 'v4',
-    auth, // Pass the GoogleAuth instance directly
-  });
+  if (!clientEmail) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_EMAIL is not set');
+  }
 
-  return sheets;
+  if (!privateKey) {
+    throw new Error('GOOGLE_PRIVATE_KEY is not set');
+  }
+
+  try {
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: clientEmail,
+        private_key: privateKey.replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+
+    const sheets = google.sheets({
+      version: 'v4',
+      auth, // Pass the GoogleAuth instance directly
+    });
+
+    return sheets;
+  } catch (error: any) {
+    console.error('Error creating Google Auth client:', error);
+    throw new Error(`Failed to initialize Google Sheets client: ${error.message}`);
+  }
 }
 
 // Get all sheet names (tabs) from the spreadsheet
 export async function getSheetNames(spreadsheetId: string): Promise<string[]> {
-  const sheets = await getSheetsClient();
-  const response = await sheets.spreadsheets.get({
-    spreadsheetId,
-  });
+  try {
+    const sheets = await getSheetsClient();
+    const response = await sheets.spreadsheets.get({
+      spreadsheetId,
+    });
 
-  return response.data.sheets?.map((sheet) => sheet.properties?.title || '') || [];
+    if (!response.data.sheets) {
+      return [];
+    }
+
+    return response.data.sheets.map((sheet) => sheet.properties?.title || '').filter(Boolean);
+  } catch (error: any) {
+    console.error('Error getting sheet names:', error);
+    if (error.code === 403) {
+      throw new Error('Access denied. Please verify the service account has access to the spreadsheet.');
+    } else if (error.code === 404) {
+      throw new Error('Spreadsheet not found. Please verify the spreadsheet ID is correct.');
+    }
+    throw new Error(`Failed to get sheet names: ${error.message}`);
+  }
 }
 
 // Get all data from a specific sheet
 export async function getSheetData(spreadsheetId: string, sheetName: string) {
-  const sheets = await getSheetsClient();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${sheetName}!A:Z`,
-  });
+  try {
+    const sheets = await getSheetsClient();
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:Z`,
+    });
 
-  return response.data.values || [];
+    return response.data.values || [];
+  } catch (error: any) {
+    console.error(`Error getting data from sheet ${sheetName}:`, error);
+    if (error.code === 403) {
+      throw new Error(`Access denied to sheet "${sheetName}". Please verify the service account has access.`);
+    } else if (error.code === 400) {
+      throw new Error(`Sheet "${sheetName}" not found or invalid range.`);
+    }
+    throw new Error(`Failed to get data from sheet "${sheetName}": ${error.message}`);
+  }
 }
 
 // Normalize roll number for matching (handles formats like "OPEN183" or "OPEN183@user")

@@ -51,26 +51,40 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const sheetNames = await getSheetNames(spreadsheetId);
-      const attendanceMap: Record<string, boolean> = {};
+      try {
+        const sheetNames = await getSheetNames(spreadsheetId);
+        const attendanceMap: Record<string, boolean> = {};
 
-      // Check attendance for each sheet
-      for (const sheetName of sheetNames) {
-        try {
-          const data = await getSheetData(spreadsheetId, sheetName);
-          if (data && data.length > 0) {
-            const studentResult = findStudentByRollNumber(data, rollNumber);
-            attendanceMap[sheetName] = studentResult !== null;
-          } else {
+        // Check attendance for each sheet
+        for (const sheetName of sheetNames) {
+          try {
+            const data = await getSheetData(spreadsheetId, sheetName);
+            if (data && data.length > 0) {
+              const studentResult = findStudentByRollNumber(data, rollNumber);
+              attendanceMap[sheetName] = studentResult !== null;
+            } else {
+              attendanceMap[sheetName] = false;
+            }
+          } catch (err: any) {
+            console.error(`Error checking sheet ${sheetName}:`, err.message);
+            // If there's an error checking a sheet, mark as not attended
             attendanceMap[sheetName] = false;
           }
-        } catch (err) {
-          // If there's an error checking a sheet, mark as not attended
-          attendanceMap[sheetName] = false;
         }
-      }
 
-      return NextResponse.json({ attendance: attendanceMap });
+        return NextResponse.json({ attendance: attendanceMap });
+      } catch (err: any) {
+        console.error('Error getting sheet names:', err);
+        // If we can't get sheet names, return empty attendance map
+        // This allows the UI to still show the error message
+        return NextResponse.json(
+          { 
+            attendance: {},
+            error: err.message || 'Failed to fetch sheet names'
+          },
+          { status: 500 }
+        );
+      }
     }
 
     if (action === 'get') {
