@@ -1,0 +1,47 @@
+<svg width="200" height="50" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for icon - vibrant teal to darker teal/blue-green -->
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2DD4BF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#14B8A6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D9488;stop-opacity:1" />
+    </linearGradient>
+    <!-- Gradient for text - lighter teal on left to darker teal on right -->
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2DD4BF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#14B8A6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D9488;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon Group -->
+  <g transform="translate(5, 8)">
+    <!-- Circular base -->
+    <circle cx="17" cy="17" r="16" fill="url(#iconGradient)" opacity="0.15"/>
+    <circle cx="17" cy="17" r="13.5" fill="url(#iconGradient)"/>
+    
+    <!-- Graduation cap - angular shape extending upward and to the right -->
+    <path d="M 5 17 
+             L 5 9 
+             Q 5 5, 9 5 
+             L 17 5 
+             Q 25 5, 29 9 
+             L 31 12 
+             Q 33 15, 31 18 
+             L 29 21 
+             Q 25 25, 17 25 
+             Q 9 25, 5 19 
+             Z" 
+          fill="url(#iconGradient)"/>
+    
+    <!-- Tassel dot at upper left corner -->
+    <circle cx="7" cy="7" r="2.5" fill="#0D9488"/>
+  </g>
+  
+  <!-- Text: opengrad in lowercase -->
+  <g transform="translate(50, 12)">
+    <text x="0" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="700" fill="url(#textGradient)" letter-spacing="-0.3">
+      opengrad
+    </text>
+  </g>
+</svg>
