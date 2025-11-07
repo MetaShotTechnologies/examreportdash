@@ -10,8 +10,10 @@ export async function getSheetsClient() {
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
-  const authClient = await auth.getClient();
-  const sheets = google.sheets({ version: 'v4', auth: authClient });
+  const sheets = google.sheets({
+    version: 'v4',
+    auth, // Pass the GoogleAuth instance directly
+  });
 
   return sheets;
 }
